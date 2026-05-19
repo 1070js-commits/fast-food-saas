@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "installCommand": "npm install",
+  "regions": ["cdg1"],
+  "functions": {
+    "src/app/api/ai/food-cost/route.ts":   { "maxDuration": 60 },
+    "src/app/api/ai/best-sellers/route.ts": { "maxDuration": 60 },
+    "src/app/api/sms/notify/route.ts":      { "maxDuration": 20 }
+  },
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@next_public_supabase_url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@next_public_supabase_anon_key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+    "ANTHROPIC_API_KEY": "@anthropic_api_key",
+    "TWILIO_ACCOUNT_SID": "@twilio_account_sid",
+    "TWILIO_AUTH_TOKEN": "@twilio_auth_token",
+    "TWILIO_FROM_NUMBER": "@twilio_from_number",
+    "NEXT_PUBLIC_APP_URL": "@next_public_app_url"
+  }
+}
