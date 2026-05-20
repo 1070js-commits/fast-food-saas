@@ -2,7 +2,10 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { getEmployeeSessionLocal } from "@/lib/employee-session";
+import {
+  clearEmployeeSessionLocal,
+  getEmployeeSessionLocal,
+} from "@/lib/employee-session";
 
 export function EmployeeSessionGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -16,15 +19,19 @@ export function EmployeeSessionGuard({ children }: { children: ReactNode }) {
     }
     setReady(true);
 
+    const expire = async () => {
+      clearEmployeeSessionLocal();
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.replace("/");
+    };
+
     const msUntilExpiry = session.expiresAt - Date.now();
     if (msUntilExpiry <= 0) {
-      router.replace("/");
+      expire();
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      router.replace("/");
-    }, msUntilExpiry);
+    const timer = window.setTimeout(expire, msUntilExpiry);
 
     return () => window.clearTimeout(timer);
   }, [router]);

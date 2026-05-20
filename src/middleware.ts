@@ -71,7 +71,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (pathname === "/employe/dashboard" && !employeeSession) {
+  if (pathname.startsWith("/employe") && !employeeSession) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/";
     return NextResponse.redirect(redirectUrl);
@@ -83,7 +83,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/employe/dashboard",
+    "/employe/:path*",
     "/login",
     "/register",
   ],

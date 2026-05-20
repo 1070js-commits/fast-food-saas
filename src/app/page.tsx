@@ -1,19 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
   clearEmployeeSessionLocal,
-  getEmployeeSessionLocal,
   saveEmployeeSessionLocal,
   type EmployeeSession,
 } from "@/lib/employee-session";
 import {
   clearManagerSessionLocal,
-  getManagerSessionLocal,
   saveManagerSessionLocal,
   type ManagerSession,
 } from "@/lib/manager-session";
@@ -41,22 +37,7 @@ export default function HomePage() {
         if (d.name) setRestaurantName(d.name);
       })
       .catch(() => {});
-
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        router.replace("/dashboard");
-        return;
-      }
-      if (getManagerSessionLocal()) {
-        router.replace("/dashboard");
-        return;
-      }
-      if (getEmployeeSessionLocal()) {
-        router.replace("/employe/dashboard");
-      }
-    });
-  }, [router]);
+  }, []);
 
   const triggerShake = useCallback(() => {
     setShake(true);
@@ -220,12 +201,6 @@ export default function HomePage() {
           })}
         </div>
 
-        <Link
-          href="/login"
-          className="text-[12px] font-medium text-white/30 transition hover:text-white/50"
-        >
-          Code oublié ?
-        </Link>
       </div>
     </main>
   );

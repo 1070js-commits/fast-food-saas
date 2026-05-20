@@ -29,14 +29,14 @@ export function useEmployeeModuleGuard() {
       const msUntilExpiry = session.expiresAt - Date.now();
       if (msUntilExpiry <= 0) {
         clearEmployeeSessionLocal();
-        await fetch("/api/employe/logout", { method: "POST" });
+        await fetch("/api/auth/logout", { method: "POST" });
         router.replace("/");
         return;
       }
 
       window.setTimeout(async () => {
         clearEmployeeSessionLocal();
-        await fetch("/api/employe/logout", { method: "POST" });
+        await fetch("/api/auth/logout", { method: "POST" });
         router.replace("/");
       }, msUntilExpiry);
     };

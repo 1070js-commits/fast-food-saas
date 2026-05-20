@@ -1,13 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { CreditCard, ChefHat, Package, Lock } from "lucide-react";
-import { EmployeeSessionGuard } from "@/components/employe/EmployeeSessionGuard";
-import {
-  clearEmployeeSessionLocal,
-  getEmployeeSessionLocal,
-} from "@/lib/employee-session";
+import { CreditCard, ChefHat, Package } from "lucide-react";
+import { getEmployeeSessionLocal } from "@/lib/employee-session";
 
 const modules = [
   {
@@ -30,15 +25,8 @@ const modules = [
   },
 ];
 
-function EmployeDashboardContent() {
-  const router = useRouter();
+export default function EmployeDashboardPage() {
   const session = getEmployeeSessionLocal();
-
-  const lock = async () => {
-    clearEmployeeSessionLocal();
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.replace("/");
-  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0f1117" }}>
@@ -50,14 +38,6 @@ function EmployeDashboardContent() {
               {session?.businessName ?? "Commerce"}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={lock}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 transition hover:border-[#ff6b35]/50 hover:text-white"
-          >
-            <Lock size={16} />
-            Verrouiller
-          </button>
         </div>
       </header>
 
@@ -92,13 +72,5 @@ function EmployeDashboardContent() {
         </div>
       </main>
     </div>
-  );
-}
-
-export default function EmployeDashboardPage() {
-  return (
-    <EmployeeSessionGuard>
-      <EmployeDashboardContent />
-    </EmployeeSessionGuard>
   );
 }

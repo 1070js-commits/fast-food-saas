@@ -9,8 +9,14 @@ import {
   Users,
   UtensilsCrossed,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getAccessContext } from "@/lib/access-context";
+import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import {
+  MANAGER_SESSION_COOKIE,
+  parseManagerSession,
+} from "@/lib/manager-session";
 
 const modules = [
   {
@@ -64,19 +70,30 @@ const modules = [
 ];
 
 export default async function DashboardPage() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const ctx = await getAccessContext();
 
-  if (!user) {
-    redirect("/login");
+  if (!ctx || ctx.type === "employee") {
+    redirect("/");
   }
 
-  const displayName =
-    user.user_metadata?.full_name ??
-    user.user_metadata?.business_name ??
-    user.email;
+  let displayName = "Gérant";
+
+  if (ctx.type === "admin") {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    displayName =
+      user?.user_metadata?.full_name ??
+      user?.user_metadata?.business_name ??
+      user?.email ??
+      "Administrateur";
+  } else {
+    const managerSession = parseManagerSession(
+      cookies().get(MANAGER_SESSION_COOKIE)?.value
+    );
+    displayName = managerSession?.businessName ?? "Gérant";
+  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0f1117" }}>
@@ -110,7 +127,7 @@ export default async function DashboardPage() {
                 >
                   <Icon className="h-6 w-6" style={{ color: "#ff6b35" }} />
                 </div>
-                <h3 className="text-lg font-semibold text-white group-hover:text-[#ff6b35] transition-colors">
+                <h3 className="text-lg font-semibold text-white transition-colors group-hover:text-[#ff6b35]">
                   {mod.title}
                 </h3>
                 <p className="mt-1 text-sm text-gray-400">{mod.description}</p>
