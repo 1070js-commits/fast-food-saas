@@ -1,16 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { CreditCard, ChefHat, Package, Lock } from "lucide-react";
+import { EmployeeSessionGuard } from "@/components/employe/EmployeeSessionGuard";
 import {
-  CreditCard,
-  ChefHat,
-  LayoutDashboard,
-  Package,
-  Sparkles,
-  Settings,
-  Users,
-  UtensilsCrossed,
-} from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+  clearEmployeeSessionLocal,
+  getEmployeeSessionLocal,
+} from "@/lib/employee-session";
 
 const modules = [
   {
@@ -26,66 +23,41 @@ const modules = [
     href: "/dashboard/cuisine",
   },
   {
-    title: "Dashboard",
-    description: "Statistiques et ventes",
-    icon: LayoutDashboard,
-    href: "/dashboard/stats",
-  },
-  {
     title: "Stock",
     description: "Inventaire et approvisionnement",
     icon: Package,
     href: "/dashboard/stock",
   },
-  {
-    title: "Clients",
-    description: "Fidélité et historique",
-    icon: Users,
-    href: "/dashboard/clients",
-  },
-  {
-    title: "Menu",
-    description: "Produits et catégories",
-    icon: UtensilsCrossed,
-    href: "/dashboard/menu",
-  },
-  {
-    title: "AI Insights",
-    description: "Food cost et best sellers (Claude)",
-    icon: Sparkles,
-    href: "/dashboard/ai-insights",
-  },
-  {
-    title: "Paramètres",
-    description: "PIN employé et configuration",
-    icon: Settings,
-    href: "/dashboard/settings",
-  },
 ];
 
-export default async function DashboardPage() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+function EmployeDashboardContent() {
+  const router = useRouter();
+  const session = getEmployeeSessionLocal();
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  const displayName =
-    user.user_metadata?.full_name ??
-    user.user_metadata?.business_name ??
-    user.email;
+  const lock = async () => {
+    clearEmployeeSessionLocal();
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.replace("/");
+  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0f1117" }}>
       <header className="border-b border-gray-800 px-6 py-5">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">FastFood SaaS</h1>
-            <p className="mt-1 text-sm text-gray-400">Bienvenue, {displayName}</p>
+            <h1 className="text-2xl font-bold text-white">Espace employé</h1>
+            <p className="mt-1 text-sm text-gray-400">
+              {session?.businessName ?? "Commerce"}
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={lock}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 transition hover:border-[#ff6b35]/50 hover:text-white"
+          >
+            <Lock size={16} />
+            Verrouiller
+          </button>
         </div>
       </header>
 
@@ -110,7 +82,7 @@ export default async function DashboardPage() {
                 >
                   <Icon className="h-6 w-6" style={{ color: "#ff6b35" }} />
                 </div>
-                <h3 className="text-lg font-semibold text-white group-hover:text-[#ff6b35] transition-colors">
+                <h3 className="text-lg font-semibold text-white transition-colors group-hover:text-[#ff6b35]">
                   {mod.title}
                 </h3>
                 <p className="mt-1 text-sm text-gray-400">{mod.description}</p>
@@ -120,5 +92,13 @@ export default async function DashboardPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function EmployeDashboardPage() {
+  return (
+    <EmployeeSessionGuard>
+      <EmployeDashboardContent />
+    </EmployeeSessionGuard>
   );
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { getAccessContext } from "@/lib/access-context";
 
 export type KitchenOrderStatus = "en_attente" | "en_preparation" | "pret";
 
@@ -9,12 +9,9 @@ export async function updateOrderStatusAction(
   orderId: string,
   status: KitchenOrderStatus
 ): Promise<{ ok: true } | { error: string }> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const ctx = await getAccessContext();
 
-  if (!user) {
+  if (!ctx) {
     return { error: "Session expirée. Reconnectez-vous." };
   }
 
@@ -23,7 +20,8 @@ export async function updateOrderStatusAction(
   const { error } = await admin
     .from("orders")
     .update({ status })
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .eq("business_id", ctx.businessId);
 
   if (error) {
     console.error("[cuisine] updateOrderStatus error:", error);

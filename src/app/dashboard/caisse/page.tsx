@@ -11,9 +11,9 @@ import {
 } from "lucide-react";
 import { createOrderAction } from "@/app/dashboard/caisse/actions";
 import { createClient } from "@/lib/supabase/client";
-
-// TODO: retirer après test — business_id en dur
-const TEST_BUSINESS_ID = "fef05996-6b89-41d8-8aad-8c5d2d6718be";
+import { getClientBusinessId } from "@/lib/active-business";
+import { getEmployeeSessionLocal } from "@/lib/employee-session";
+import { useEmployeeModuleGuard } from "@/components/employe/useEmployeeModuleGuard";
 
 const supabase = createClient();
 
@@ -242,6 +242,7 @@ function ProductCard({
 }
 
 export default function CaissePage() {
+  useEmployeeModuleGuard();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [category, setCategory] = useState("Tous");
@@ -256,9 +257,11 @@ export default function CaissePage() {
 
   const loadMenu = useCallback(async () => {
     setLoading(true);
+    const businessId = getClientBusinessId();
     const { data, error } = await supabase
       .from("menu_items")
       .select("id, name, price, category_id, categories(name)")
+      .eq("business_id", businessId)
       .eq("is_available", true)
       .order("name");
 
@@ -280,15 +283,20 @@ export default function CaissePage() {
 
   useEffect(() => {
     loadMenu();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        const name =
-          user.user_metadata?.business_name ??
-          user.user_metadata?.full_name ??
-          user.email?.split("@")[0];
-        if (name) setBusinessName(name);
-      }
-    });
+    const employeeSession = getEmployeeSessionLocal();
+    if (employeeSession?.businessName) {
+      setBusinessName(employeeSession.businessName);
+    } else {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          const name =
+            user.user_metadata?.business_name ??
+            user.user_metadata?.full_name ??
+            user.email?.split("@")[0];
+          if (name) setBusinessName(name);
+        }
+      });
+    }
   }, [loadMenu]);
 
   useEffect(() => {
@@ -360,15 +368,16 @@ export default function CaissePage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    const employeeSession = getEmployeeSessionLocal();
 
-    if (!user) {
+    if (!user && !employeeSession) {
       setMessage({ type: "error", text: "Session expirée. Reconnectez-vous." });
       setSubmitting(false);
       return;
     }
 
     const result = await createOrderAction(
-      TEST_BUSINESS_ID,
+      getClientBusinessId(),
       total,
       cart.map((line) => ({
         menuItemId: line.item.id,

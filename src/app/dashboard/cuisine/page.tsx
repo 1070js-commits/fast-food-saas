@@ -10,8 +10,8 @@ import {
   type KitchenOrderStatus,
 } from "@/app/dashboard/cuisine/actions";
 import { createClient } from "@/lib/supabase/client";
-
-const TEST_BUSINESS_ID = "fef05996-6b89-41d8-8aad-8c5d2d6718be";
+import { getClientBusinessId } from "@/lib/active-business";
+import { useEmployeeModuleGuard } from "@/components/employe/useEmployeeModuleGuard";
 
 const supabase = createClient();
 
@@ -249,6 +249,7 @@ function OrderCard({
 }
 
 export default function CuisinePage() {
+  useEmployeeModuleGuard();
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -277,7 +278,7 @@ export default function CuisinePage() {
         )
       `
       )
-      .eq("business_id", TEST_BUSINESS_ID)
+      .eq("business_id", getClientBusinessId())
       .in("status", [...KITCHEN_STATUSES])
       .order("created_at", { ascending: true });
 
@@ -304,7 +305,7 @@ export default function CuisinePage() {
           event: "*",
           schema: "public",
           table: "orders",
-          filter: `business_id=eq.${TEST_BUSINESS_ID}`,
+          filter: `business_id=eq.${getClientBusinessId()}`,
         },
         () => {
           loadOrders(true);

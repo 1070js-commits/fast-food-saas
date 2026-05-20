@@ -6,9 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { StockTable } from "./StockTable";
 import { AddIngredientButton } from "./AddIngredientButton";
 import { AlertTriangle } from "lucide-react";
-
-// TODO: retirer après test — business_id en dur
-const TEST_BUSINESS_ID = "fef05996-6b89-41d8-8aad-8c5d2d6718be";
+import { useEmployeeModuleGuard } from "@/components/employe/useEmployeeModuleGuard";
 
 const INGREDIENT_SELECT =
   "id, business_id, name, unit, current_stock, min_stock, cost_per_unit";
@@ -24,29 +22,15 @@ export function StockView({
   profileBusinessId,
   initialIngredients,
 }: StockViewProps) {
+  useEmployeeModuleGuard();
   const [ingredients, setIngredients] = useState(initialIngredients);
   const supabase = createClient();
-  const queryBusinessId = TEST_BUSINESS_ID;
-
   const reloadIngredients = useCallback(async () => {
-    console.log("[stock/StockView] reloadIngredients", {
-      businessIdProp: businessId,
-      profileBusinessId,
-      queryBusinessId,
-    });
-
     const { data, error } = await supabase
       .from("ingredients")
       .select(INGREDIENT_SELECT)
-      .eq("business_id", queryBusinessId)
+      .eq("business_id", businessId)
       .order("name");
-
-    console.log("[stock/StockView] reloadIngredients result", {
-      error: error?.message ?? null,
-      errorDetails: error,
-      count: data?.length ?? 0,
-      data,
-    });
 
     if (error) {
       console.error("[stock/StockView] reload failed", error);
@@ -54,7 +38,7 @@ export function StockView({
     }
 
     setIngredients((data ?? []) as Ingredient[]);
-  }, [businessId, profileBusinessId, queryBusinessId]);
+  }, [businessId, supabase]);
 
   const lowStock = ingredients.filter(
     (i) => Number(i.current_stock) <= Number(i.min_stock)

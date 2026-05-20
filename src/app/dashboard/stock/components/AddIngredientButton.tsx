@@ -5,9 +5,6 @@ import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import { Plus } from "lucide-react";
 
-// TODO: retirer après test — business_id en dur
-const TEST_BUSINESS_ID = "fef05996-6b89-41d8-8aad-8c5d2d6718be";
-
 const INGREDIENT_SELECT =
   "id, business_id, name, unit, current_stock, min_stock, cost_per_unit";
 
@@ -24,9 +21,8 @@ export function AddIngredientButton({
 
   const submit = async (formData: FormData) => {
     setBusy(true);
-    const insertBusinessId = TEST_BUSINESS_ID;
     const payload = {
-      business_id: insertBusinessId,
+      business_id: businessId,
       name: String(formData.get("name") ?? "").trim(),
       unit: String(formData.get("unit") ?? "g"),
       current_stock: Number(formData.get("current_stock") ?? 0),
@@ -34,23 +30,7 @@ export function AddIngredientButton({
       cost_per_unit: Number(formData.get("cost_per_unit") ?? 0),
     };
 
-    console.log("[stock/AddIngredient] insert", {
-      businessIdProp: businessId,
-      insertBusinessId,
-      payload,
-    });
-
-    const { data: inserted, error } = await supabase
-      .from("ingredients")
-      .insert(payload)
-      .select(INGREDIENT_SELECT)
-      .single();
-
-    console.log("[stock/AddIngredient] insert result", {
-      error: error?.message ?? null,
-      errorDetails: error,
-      inserted,
-    });
+    const { error } = await supabase.from("ingredients").insert(payload);
 
     setBusy(false);
     if (error) {

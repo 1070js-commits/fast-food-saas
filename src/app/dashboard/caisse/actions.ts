@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { getAccessContext } from "@/lib/access-context";
 
 type OrderLineInput = {
   menuItemId: string;
@@ -14,13 +14,14 @@ export async function createOrderAction(
   total: number,
   items: OrderLineInput[]
 ): Promise<{ orderId: string } | { error: string }> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const ctx = await getAccessContext();
 
-  if (!user) {
+  if (!ctx) {
     return { error: "Session expirée. Reconnectez-vous." };
+  }
+
+  if (ctx.businessId !== businessId) {
+    return { error: "Accès refusé pour ce commerce." };
   }
 
   const admin = createAdminClient();
@@ -29,7 +30,7 @@ export async function createOrderAction(
     .from("orders")
     .insert({
       business_id: businessId,
-      employee_id: user.id,
+      employee_id: ctx.type === "admin" ? ctx.userId : null,
       type: "counter",
       status: "en_attente",
       total,
